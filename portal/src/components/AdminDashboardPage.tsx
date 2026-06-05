@@ -323,7 +323,7 @@ const AdminDashboardPage: React.FC = () => {
             예: 'https://본인워크스페이스.slack.com/archives/C12345678'
             ============================================================ */}
         <a
-          href="https://slack.com"
+          href="https://app.slack.com/client/T0B19N50DFH/C0B1Q0VC59U"
           target="_blank"
           rel="noopener noreferrer"
           className="mt-12 block group relative rounded-3xl border border-white/10 bg-gradient-to-br from-violet-900/30 via-zinc-900/40 to-zinc-900/40 p-8 backdrop-blur-md overflow-hidden hover:border-violet-500/40 transition-all duration-300"
