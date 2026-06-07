@@ -165,7 +165,23 @@ export function subscribeToLogs(
   onLog: (log: LogEvent) => void,
   tenantId?: string
 ): EventSource {
-  const url = `${API_BASE}/api/logs/stream${buildQuery({ tenant_id: tenantId })}`;
+  // 비동기 토큰 획득은 EventSource 생성 시점엔 await 못 함.
+  // 그래서 localStorage 에서 직접 꺼내는 방식.
+  const sessionRaw = localStorage.getItem('sb-huftejrbfbnselnbcdqw-auth-token');
+  let token: string | null = null;
+  if (sessionRaw) {
+    try {
+      const session = JSON.parse(sessionRaw);
+      token = session?.access_token ?? null;
+    } catch {
+      /* 파싱 실패 무시 */
+    }
+  }
+
+  const url = `${API_BASE}/api/logs/stream${buildQuery({
+    tenant_id: tenantId,
+    token: token,
+  })}`;
   const es = new EventSource(url);
   es.onmessage = (e) => {
     try {
