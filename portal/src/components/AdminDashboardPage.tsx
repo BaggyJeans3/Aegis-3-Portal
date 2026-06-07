@@ -393,6 +393,84 @@ const AdminDashboardPage: React.FC = () => {
             </div>
           </div>
         </a>
+        {/* ============================================================
+            고객사 실시간 로그 - 큰 버튼
+            ============================================================ */}
+        <button
+          onClick={() => navigate('/customer-dashboard')}
+          className="mt-6 block w-full group relative rounded-3xl border border-white/10 bg-gradient-to-br from-blue-900/30 via-zinc-900/40 to-zinc-900/40 p-8 backdrop-blur-md overflow-hidden hover:border-blue-500/40 transition-all duration-300 text-left"
+        >
+          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl group-hover:bg-blue-500/20 transition-all pointer-events-none"></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-violet-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+          <div className="relative z-10 flex items-center gap-6">
+            {/* 아이콘 */}
+            <div className="shrink-0 w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+              <svg
+                className="w-8 h-8 text-blue-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"
+                />
+              </svg>
+            </div>
+
+            {/* 텍스트 */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-3 mb-1.5">
+                <h2 className="text-xl font-bold text-white tracking-tight">
+                  고객사 실시간 로그
+                </h2>
+              </div>
+              <p className="text-sm text-zinc-400 mb-3">
+                전체 고객사의 트래픽과 보안 이벤트를 실시간으로 확인합니다.
+                드롭다운에서 고객사를 선택하여 개별 로그를 조회할 수 있습니다.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <code className="px-2 py-1 rounded-md bg-black/40 border border-white/10 text-xs font-mono text-green-300">
+                  정상 트래픽
+                </code>
+                <code className="px-2 py-1 rounded-md bg-black/40 border border-white/10 text-xs font-mono text-red-300">
+                  공격 차단
+                </code>
+                <code className="px-2 py-1 rounded-md bg-black/40 border border-white/10 text-xs font-mono text-violet-300">
+                  허니팟
+                </code>
+              </div>
+            </div>
+
+            {/* 우측 버튼 */}
+            <div className="shrink-0 flex flex-col items-end gap-2">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-500/10 border border-blue-500/20 group-hover:bg-blue-500/20 group-hover:border-blue-500/30 transition-all">
+                <span className="text-sm font-semibold text-blue-300">
+                  로그 보기
+                </span>
+                <svg
+                  className="w-4 h-4 text-blue-300 group-hover:translate-x-1 transition-transform"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M14 5l7 7m0 0l-7 7m7-7H3"
+                  />
+                </svg>
+              </div>
+              <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-wider">
+                Customer Dashboard
+              </p>
+            </div>
+          </div>
+        </button>
 
         {/* ============================================================
             등록된 고객사 목록 표
