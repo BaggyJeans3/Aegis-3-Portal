@@ -11,51 +11,48 @@ const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8001';
 // ---- 로그 스키마 타입 (확정된 v3.2 스키마) ----
 export interface LogEvent {
   _id: string;
+
   event: {
-    id: string;
-    trace_id: string;
-    sequence: number;
+    id: string | null;
     timestamp: string;
-    version: string;
-    observer: { hostname: string; type: string };
   };
-  source: {
-    ip: string;
-    nat_ip: string;
-    geo: { country_iso: string; city_name: string };
-    tls: { version: string; ja3_hash: string };
-    user_agent: { original: string; hash: string };
-  };
+
   subject: {
-    user: { id: string; role: string };
-    auth: { type: string; is_authenticated: boolean; session_id: string };
-    tenant_id: string;
+    tenant_id: string | null;
+    user: {
+      id: string;
+    };
   };
+
+  source: {
+    nat_ip: string | null;
+  };
+
   http: {
     request: {
       method: string;
-      host: string;
       path: string;
-      resource: { type: string; id: string; owner_id: string };
-      params: string;
-      header_fingerprint: string;
-      body_signature: string;
-      body_size_byte: number;
     };
     response: {
       status_code: number;
-      error: { code: string | null; message: string | null };
-      latency_ms: number;
-      body_size_byte: number;
-      content_type: string;
     };
   };
+
   security_analysis: {
-    risk_score: number;
-    flags: { is_bola: boolean; is_shadow_api: boolean; is_data_leak: boolean };
-    action: string;
-    rule_id: string;
+    risk_score: number; // 0-1 정규화됨 (백엔드가 100 으로 나눔)
+    action: string; // proxy / block / honeypot / log_only
+    rule_id: string | null; // rule_hits 의 첫 번째
+    flags: {
+      is_bola: boolean;
+      is_shadow_api: boolean;
+      is_data_leak: boolean;
+    };
   };
+
+  // 부수 정보 (옛 스키마엔 없던 필드. 표시는 선택)
+  company_name?: string | null;
+  level?: string | null; // LOW / SUSPICIOUS / HIGH 등
+  alert?: boolean;
 }
 
 export interface LogsResponse {
