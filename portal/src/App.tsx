@@ -8,6 +8,7 @@ import LoginPage from './components/LoginPage';
 import ApiManagePage from './components/ApiManagePage';
 import AdminDashboardPage from './components/AdminDashboardPage';
 import CustomerDashboardPage from './components/CustomerDashboardPage';
+import DetailsPage from './components/DetailsPage';
 
 function App() {
   const [session, setSession] = useState<Session | null>(null);
@@ -74,6 +75,14 @@ function App() {
                     to="/"
                   >
                     메인 페이지
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    className="rounded-full px-5 py-2.5 transition-all duration-300 bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white hover:shadow-[0_0_20px_rgba(59,130,246,0.4)]"
+                    to="/details"
+                  >
+                    자세히
                   </Link>
                 </li>
                 {!session ? (
@@ -143,6 +152,7 @@ function App() {
         <main className="w-full flex-1 animate-in fade-in slide-in-from-bottom-4 duration-700 flex flex-col pt-4">
           <Routes>
             <Route path="/" element={<MainPage />} />
+            <Route path="/details" element={<DetailsPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignUpPage />} />
             <Route path="/api-manage" element={<ApiManagePage />} />
