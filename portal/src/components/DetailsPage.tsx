@@ -100,11 +100,7 @@ const SIGNUP_STEPS: { title: string; description: string; to?: string; cta?: str
     to: '/api-manage',
     cta: 'API 관리로 이동',
   },
-  {
-    title: 'API Key 발급',
-    description:
-      '등록이 완료되면 고객사 전용 API Key가 발급됩니다. 외부에 노출되지 않도록 안전한 곳에 보관하세요.',
-  },
+  
   {
     title: '실시간 모니터링',
     description:
@@ -121,7 +117,7 @@ const SIGNUP_CHECKLIST = [
   'OpenAPI / Swagger 명세서 (JSON 또는 YAML)',
 ];
 
-const PLANS = ['FREE', 'PRO', 'ENTERPRISE'];
+const PLANS = ['FREE', 'PRO(업데이트 예정)', 'ENTERPRISE(업데이트 예정)'];
 
 // =====================================================================
 // 공통 헬퍼
@@ -296,143 +292,104 @@ const SignupSection: React.FC = () => (
 // 탭 3. k6 테스트 결과
 // =====================================================================
 /**
- * MuShop 대상 Aegis-3 부하 테스트 실측 결과 (k6, 시나리오별 4분).
- *   - 베이스라인: Aegis-3를 거치지 않고 백엔드에 직접 요청 (비교 기준)
- *   - 정상 / 공격 / 혼합: Aegis-3 프록시 경유
+ * MuShop 대상 Aegis-3 부하 테스트 실측 결과 (k6, 시나리오별 1분).
+ *   - 정상 / 공격 / 혼합: 모두 Aegis-3 프록시 경유
  *
  * 참고
  *   - WAF 판정 정확도 = (통과 2xx + 차단 4xx) / 전체 요청
- *   - 연결 실패율은 k6 http_req_failed 값이라 4xx 차단도 '실패'로 집계됨
- *   - p99 는 k6 summaryTrendStats 에 빠져 있어 0.0ms 로 찍혀서 표시하지 않음
+ *   - 시나리오별 측정 시각이 다름 (normal 9/30, attack · mixed 10/4)
  */
-type LoadMode = 'baseline' | 'normal' | 'attack' | 'mixed';
+type LoadMode = 'normal' | 'attack' | 'mixed';
+type Verdict = 'pass' | 'partial' | 'fail';
 
 interface LoadScenario {
   mode: LoadMode;
   name: string;
   description: string;
-  route: string;
+  measuredAt: string;
   totalRequests: number;
   rps: number;
   avgMs: number;
   p50Ms: number;
   p95Ms: number;
+  p99Ms: number;
   maxMs: number;
   passed2xx: number;
   blocked4xx: number;
-  accuracy: number | null; // %, 베이스라인은 WAF 미경유라 null
+  accuracy: number; // %
   failRate: number; // %
+  verdict: Verdict;
+  verdictNote: string;
 }
 
 const LOAD_TEST_META = [
   { k: '대상', v: 'MuShop (자체 구축 클라우드 웹)' },
   { k: '도구', v: 'Grafana k6' },
-  { k: '테스트 시간', v: '시나리오별 4분' },
-  { k: '비교 기준', v: '백엔드 직접 호출 (베이스라인)' },
+  { k: '테스트 시간', v: '시나리오별 1분' },
+  { k: '측정일', v: '9/30 (normal) · 10/4 (attack, mixed)' },
 ];
 
 const LOAD_SCENARIOS: LoadScenario[] = [
   {
-    mode: 'baseline',
-    name: '베이스라인',
-    description: 'Aegis-3를 거치지 않고 백엔드에 직접 요청',
-    route: '백엔드 직접',
-    totalRequests: 34210,
-    rps: 139.8,
-    avgMs: 25.7,
-    p50Ms: 15.9,
-    p95Ms: 80.7,
-    maxMs: 826.3,
-    passed2xx: 34210,
-    blocked4xx: 0,
-    accuracy: null,
-    failRate: 0,
-  },
-  {
     mode: 'normal',
     name: '정상 요청 폭주',
     description: '정상 요청만 Aegis-3를 통해 대량 전송',
-    route: 'Aegis-3 경유',
-    totalRequests: 20008,
-    rps: 81.7,
-    avgMs: 296.7,
-    p50Ms: 33.8,
-    p95Ms: 2069.2,
-    maxMs: 10624.4,
-    passed2xx: 19928,
+    measuredAt: '9/30 21:46',
+    totalRequests: 5522,
+    rps: 91.1,
+    avgMs: 558.2,
+    p50Ms: 339.8,
+    p95Ms: 1474.7,
+    p99Ms: 7500,
+    maxMs: 10001.2,
+    passed2xx: 5490,
     blocked4xx: 0,
-    accuracy: 99.6,
-    failRate: 0.4,
+    accuracy: 99.42,
+    failRate: 0.58,
+    verdict: 'partial',
+    verdictNote: '응답 시간 최적화 중',
   },
   {
     mode: 'attack',
     name: '공격 요청 폭주',
     description: '공격 요청만 Aegis-3를 통해 대량 전송',
-    route: 'Aegis-3 경유',
-    totalRequests: 23188,
-    rps: 126.3,
-    avgMs: 3.8,
-    p50Ms: 3.5,
-    p95Ms: 6.7,
-    maxMs: 96.5,
+    measuredAt: '10/4 22:23',
+    totalRequests: 8624,
+    rps: 143.1,
+    avgMs: 115.6,
+    p50Ms: 129.1,
+    p95Ms: 173.1,
+    p99Ms: 205,
+    maxMs: 1841.5,
     passed2xx: 0,
-    blocked4xx: 23188,
+    blocked4xx: 8624,
     accuracy: 100,
-    failRate: 100,
+    failRate: 0,
+    verdict: 'pass',
+    verdictNote: '합격',
   },
   {
     mode: 'mixed',
     name: '혼합 요청 폭주',
     description: '정상 80% + 공격 20% 비율로 섞어서 전송',
-    route: 'Aegis-3 경유',
-    totalRequests: 26055,
-    rps: 106.6,
-    avgMs: 255.4,
-    p50Ms: 28.4,
-    p95Ms: 1076.2,
-    maxMs: 10553.8,
-    passed2xx: 20776,
-    blocked4xx: 5112,
-    accuracy: 99.36,
-    failRate: 20.261,
+    measuredAt: '10/4 22:25',
+    totalRequests: 7485,
+    rps: 123.2,
+    avgMs: 323.1,
+    p50Ms: 254.4,
+    p95Ms: 614.2,
+    p99Ms: 2550,
+    maxMs: 8204.8,
+    passed2xx: 5982,
+    blocked4xx: 1503,
+    accuracy: 100,
+    failRate: 0,
+    verdict: 'partial',
+    verdictNote: 'p99 최적화 중',
   },
-];
-
-/** 이전 측정(로컬, 마스킹 적용 전) 대비 이번 측정(로컬, 마스킹 적용 + 최신). */
-type Verdict = 'better' | 'same' | 'worse';
-
-interface CompareRow {
-  scenario: string;
-  metric: string;
-  unit: 'rps' | 'ms' | '%';
-  prev: number;
-  curr: number;
-  verdict: Verdict;
-  note: string;
-}
-
-const COMPARE_ROWS: CompareRow[] = [
-  { scenario: '베이스라인', metric: 'RPS', unit: 'rps', prev: 142, curr: 139.8, verdict: 'same', note: '동일' },
-  { scenario: '베이스라인', metric: 'p50', unit: 'ms', prev: 17, curr: 15.9, verdict: 'better', note: '약간 개선' },
-  { scenario: '정상', metric: 'RPS', unit: 'rps', prev: 82.6, curr: 81.7, verdict: 'same', note: '동일' },
-  { scenario: '정상', metric: 'p50', unit: 'ms', prev: 41.5, curr: 33.8, verdict: 'better', note: '개선' },
-  { scenario: '정상', metric: 'p95', unit: 'ms', prev: 2061, curr: 2069, verdict: 'same', note: '동일' },
-  { scenario: '공격', metric: 'RPS', unit: 'rps', prev: 127, curr: 126.3, verdict: 'same', note: '동일' },
-  { scenario: '공격', metric: 'p50', unit: 'ms', prev: 3.5, curr: 3.5, verdict: 'same', note: '동일' },
-  { scenario: '공격', metric: 'p95', unit: 'ms', prev: 6.1, curr: 6.7, verdict: 'same', note: '동일' },
-  { scenario: '혼합', metric: 'RPS', unit: 'rps', prev: 104.5, curr: 106.6, verdict: 'better', note: '소폭 향상' },
-  { scenario: '혼합', metric: 'p50', unit: 'ms', prev: 29.1, curr: 28.4, verdict: 'better', note: '약간 개선' },
-  { scenario: '혼합', metric: 'p95', unit: 'ms', prev: 1129, curr: 1076, verdict: 'better', note: '약간 개선' },
-  { scenario: '혼합', metric: 'WAF 정확도', unit: '%', prev: 99.46, curr: 99.36, verdict: 'same', note: '동일' },
 ];
 
 const MODE_STYLES: Record<LoadMode, { label: string; badge: string; bar: string; text: string }> = {
-  baseline: {
-    label: 'BASELINE',
-    badge: 'bg-zinc-500/10 text-zinc-300 border-zinc-500/20',
-    bar: 'from-zinc-600 to-zinc-500',
-    text: 'text-zinc-300',
-  },
   normal: {
     label: 'NORMAL',
     badge: 'bg-blue-500/10 text-blue-300 border-blue-500/20',
@@ -453,25 +410,39 @@ const MODE_STYLES: Record<LoadMode, { label: string; badge: string; bar: string;
   },
 };
 
-const VERDICT_STYLES: Record<Verdict, string> = {
-  better: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20',
-  same: 'bg-zinc-500/10 text-zinc-300 border-zinc-500/20',
-  worse: 'bg-red-500/10 text-red-300 border-red-500/20',
+const VERDICT_STYLES: Record<Verdict, { badge: string; icon: typeof CheckCircleIcon; iconColor: string }> = {
+  pass: {
+    badge: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20',
+    icon: CheckCircleIcon,
+    iconColor: 'text-emerald-400',
+  },
+  partial: {
+    badge: 'bg-amber-500/10 text-amber-300 border-amber-500/20',
+    icon: ExclamationTriangleIcon,
+    iconColor: 'text-amber-400',
+  },
+  fail: {
+    badge: 'bg-red-500/10 text-red-300 border-red-500/20',
+    icon: XCircleIcon,
+    iconColor: 'text-red-400',
+  },
 };
 
 const fmtNum = (n: number) => n.toLocaleString('ko-KR');
 const fmtMs = (ms: number) => `${fmtNum(ms)}ms`;
 const fmtPct = (p: number, digits = 2) => `${p.toFixed(digits)}%`;
+/** 1초 이상은 초 단위로 (예: 1474.7 -> 1.47s, 7500 -> 7.5s). */
+const fmtDur = (ms: number) =>
+  ms >= 1000 ? `${(ms / 1000).toFixed(2).replace(/\.?0+$/, '')}s` : `${Math.round(ms)}ms`;
 
-const fmtCompareValue = (v: number, unit: CompareRow['unit']) =>
-  unit === 'ms' ? fmtMs(v) : unit === '%' ? fmtPct(v) : fmtNum(v);
-
-/** 변화량: 정확도는 %p, 나머지는 변화율(%). */
-const fmtChange = (row: CompareRow) => {
-  const diff = row.curr - row.prev;
-  if (row.unit === '%') return `${diff > 0 ? '+' : ''}${diff.toFixed(2)}%p`;
-  const pct = row.prev === 0 ? 0 : (diff / row.prev) * 100;
-  return `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`;
+const VerdictBadge: React.FC<{ s: LoadScenario }> = ({ s }) => {
+  const v = VERDICT_STYLES[s.verdict];
+  return (
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold border ${v.badge}`}>
+      <v.icon className="w-3.5 h-3.5" />
+      {s.verdictNote}
+    </span>
+  );
 };
 
 /** 가로 막대 차트 (값 비교용). */
@@ -519,9 +490,11 @@ const ScenarioCard: React.FC<{ s: LoadScenario }> = ({ s }) => {
     { k: 'RPS', v: fmtNum(s.rps) },
     { k: '총 요청', v: fmtNum(s.totalRequests) },
     { k: '평균', v: fmtMs(s.avgMs) },
+    { k: '최대', v: fmtMs(s.maxMs) },
     { k: 'p50', v: fmtMs(s.p50Ms) },
     { k: 'p95', v: fmtMs(s.p95Ms) },
-    { k: '최대', v: fmtMs(s.maxMs) },
+    { k: 'p99', v: fmtDur(s.p99Ms) },
+    { k: '실패율', v: fmtPct(s.failRate, 3) },
   ];
 
   return (
@@ -531,13 +504,14 @@ const ScenarioCard: React.FC<{ s: LoadScenario }> = ({ s }) => {
           {style.label}
         </span>
         <h3 className="text-lg font-bold text-white">{s.name}</h3>
+        <VerdictBadge s={s} />
         <span className="ml-auto rounded-lg px-2.5 py-1 text-[11px] bg-black/60 border border-white/10 text-zinc-400">
-          {s.route}
+          Aegis-3 경유 · {s.measuredAt}
         </span>
       </div>
       <p className="mt-2 text-sm text-zinc-500">{s.description}</p>
 
-      <div className="mt-6 grid grid-cols-3 gap-3">
+      <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
         {metrics.map((m) => (
           <div key={m.k} className="rounded-2xl border border-white/5 bg-black/40 px-4 py-3">
             <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">{m.k}</p>
@@ -551,10 +525,7 @@ const ScenarioCard: React.FC<{ s: LoadScenario }> = ({ s }) => {
         <div className="flex items-center justify-between text-xs">
           <span className="font-bold uppercase tracking-widest text-zinc-500">WAF 판정</span>
           <span className="text-zinc-400">
-            정확도{' '}
-            <span className="font-mono font-bold text-white">
-              {s.accuracy === null ? '- (WAF 미경유)' : fmtPct(s.accuracy)}
-            </span>
+            정확도 <span className="font-mono font-bold text-white">{fmtPct(s.accuracy)}</span>
           </span>
         </div>
         <div className="mt-3 flex h-3 overflow-hidden rounded-full bg-black/60 border border-white/5">
@@ -571,14 +542,9 @@ const ScenarioCard: React.FC<{ s: LoadScenario }> = ({ s }) => {
             <span className="h-2 w-2 rounded-full bg-red-400"></span>
             차단 4xx <span className="font-mono text-zinc-200">{fmtNum(s.blocked4xx)}</span>
           </span>
-          {other > 0 && (
-            <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-zinc-500"></span>
-              기타 <span className="font-mono text-zinc-200">{fmtNum(other)}</span>
-            </span>
-          )}
-          <span className="ml-auto">
-            연결 실패율 <span className="font-mono text-zinc-200">{fmtPct(s.failRate, 3)}</span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-zinc-500"></span>
+            기타 <span className="font-mono text-zinc-200">{fmtNum(other)}</span>
           </span>
         </div>
       </div>
@@ -589,19 +555,16 @@ const ScenarioCard: React.FC<{ s: LoadScenario }> = ({ s }) => {
 const K6Section: React.FC = () => {
   const stats = useMemo(() => {
     const byMode = (m: LoadMode) => LOAD_SCENARIOS.find((s) => s.mode === m)!;
-    const baseline = byMode('baseline');
     const normal = byMode('normal');
     const attack = byMode('attack');
     const mixed = byMode('mixed');
     return {
       totalRequests: LOAD_SCENARIOS.reduce((a, s) => a + s.totalRequests, 0),
+      securityPassCount: LOAD_SCENARIOS.filter((s) => s.accuracy >= 99).length,
+      avgAccuracy: LOAD_SCENARIOS.reduce((a, s) => a + s.accuracy, 0) / LOAD_SCENARIOS.length,
+      normal,
       attack,
       mixed,
-      attackBlockRate: attack.totalRequests > 0 ? (attack.blocked4xx / attack.totalRequests) * 100 : 0,
-      rpsDrop: (1 - normal.rps / baseline.rps) * 100,
-      p50Added: normal.p50Ms - baseline.p50Ms,
-      normalP95: normal.p95Ms,
-      mixedOther: mixed.totalRequests - mixed.passed2xx - mixed.blocked4xx,
     };
   }, []);
 
@@ -609,27 +572,27 @@ const K6Section: React.FC = () => {
     {
       label: '총 요청 수',
       value: fmtNum(stats.totalRequests),
-      sub: `${LOAD_SCENARIOS.length}개 시나리오 · 각 4분`,
+      sub: `${LOAD_SCENARIOS.length}개 시나리오 · 각 1분`,
       icon: BoltIcon,
       color: 'text-blue-400',
     },
     {
-      label: '공격 차단률',
-      value: fmtPct(stats.attackBlockRate),
-      sub: `공격 요청 ${fmtNum(stats.attack.blocked4xx)}건 모두 차단`,
+      label: 'WAF 판정 정확도 (평균)',
+      value: fmtPct(stats.avgAccuracy),
+      sub: `${LOAD_SCENARIOS.length}개 시나리오 평균 · 공격 ${fmtNum(stats.attack.blocked4xx)}건 전량 차단`,
       icon: XCircleIcon,
       color: 'text-emerald-300',
     },
     {
       label: '차단 응답 속도 (p50)',
       value: fmtMs(stats.attack.p50Ms),
-      sub: `공격 요청 p95 ${fmtMs(stats.attack.p95Ms)}`,
+      sub: `공격 요청 p95 ${fmtMs(stats.attack.p95Ms)} · p99 ${fmtDur(stats.attack.p99Ms)}`,
       icon: ClockIcon,
       color: 'text-amber-400',
     },
     {
       label: '혼합 트래픽 판정 정확도',
-      value: fmtPct(stats.mixed.accuracy ?? 0),
+      value: fmtPct(stats.mixed.accuracy),
       sub: '정상 80% + 공격 20%',
       icon: ServerStackIcon,
       color: 'text-violet-400',
@@ -637,17 +600,16 @@ const K6Section: React.FC = () => {
   ];
 
   const insights = [
-    `공격 요청 ${fmtNum(stats.attack.totalRequests)}건을 모두 4xx로 차단했고, 차단 응답은 p50 ${fmtMs(stats.attack.p50Ms)}로 즉시 반환되었습니다.`,
-    `정상 80% + 공격 20% 혼합 트래픽에서 ${fmtNum(stats.mixed.passed2xx)}건 통과, ${fmtNum(stats.mixed.blocked4xx)}건 차단으로 판정 정확도 ${fmtPct(stats.mixed.accuracy ?? 0)}를 기록했습니다.`,
-    `Aegis-3를 경유하면 베이스라인 대비 정상 요청 처리량이 약 ${stats.rpsDrop.toFixed(1)}% 줄고, p50 응답시간이 ${fmtMs(Number(stats.p50Added.toFixed(1)))} 늘어납니다.`,
-    '데이터 마스킹 기능을 추가한 뒤에도 처리량은 이전과 같은 수준을 유지했고, 정상 요청 p50은 약 18% 개선되었습니다.',
+    `공격 요청 ${fmtNum(stats.attack.totalRequests)}건을 모두 4xx로 차단했고, p95 ${fmtDur(stats.attack.p95Ms)} · p99 ${fmtDur(stats.attack.p99Ms)}로 응답 시간 기준까지 합격했습니다.`,
+    `정상 80% + 공격 20% 혼합 트래픽에서 ${fmtNum(stats.mixed.passed2xx)}건 통과, ${fmtNum(stats.mixed.blocked4xx)}건 차단으로 판정 정확도 ${fmtPct(stats.mixed.accuracy)}를 기록했습니다.`,
+    `공격 · 혼합 시나리오 모두 연결 실패율 0%로, 부하 상황에서도 요청 유실 없이 처리했습니다.`,
   ];
 
   const notes = [
-    `정상 요청 p95가 ${fmtMs(stats.normalP95)}로 높아, 일부 요청의 꼬리 지연(tail latency)이 앞으로의 개선 과제입니다.`,
-    "공격 시나리오의 연결 실패율 100%는 k6가 4xx 응답을 '실패'로 집계하기 때문으로, 모든 공격 요청이 의도대로 차단되었다는 의미입니다.",
-    `혼합 시나리오의 연결 실패율 20.261%도 대부분 의도된 차단(4xx)이며, 실제로 판정되지 못한 요청은 ${fmtNum(stats.mixedOther)}건입니다.`,
-    'WAF 판정 정확도는 전체 요청 중 통과(2xx) 또는 차단(4xx)으로 처리된 비율입니다.',
+    `정상 요청은 중앙값(p50) ${fmtMs(stats.normal.p50Ms)}로 대부분 빠르게 처리되며, 상위 5% 요청의 응답 시간(p95 ${fmtDur(stats.normal.p95Ms)})을 줄이는 최적화를 다음 단계로 진행합니다.`,
+    `정상 요청 측정(9/30)은 이전 버전 기준이며, 정상 트래픽이 80%를 차지하는 최신 버전 혼합 시나리오(10/4)에서는 p95 ${fmtDur(stats.mixed.p95Ms)}를 기록했습니다.`,
+    `혼합 시나리오의 p99 ${fmtDur(stats.mixed.p99Ms)}는 상위 1% 요청에 해당하며, 프록시 연결 · 타임아웃 설정 튜닝으로 단축할 계획입니다.`,
+    '측정일이 다른 시나리오(9/30, 10/4)가 섞여 있어, 최신 버전 기준으로 전 시나리오 재측정을 예정하고 있습니다.',
   ];
 
   return (
@@ -655,7 +617,7 @@ const K6Section: React.FC = () => {
       <SectionHeader
         eyebrow="Load Test · k6"
         title="MuShop 부하 테스트 결과"
-        description="직접 구축한 클라우드 웹 MuShop을 대상으로, Aegis-3를 거치지 않은 베이스라인과 정상 · 공격 · 혼합 트래픽을 각각 4분간 k6로 측정했습니다."
+        description="직접 구축한 클라우드 웹 MuShop을 대상으로, Aegis-3를 경유하는 정상 · 공격 · 혼합 트래픽을 각각 1분간 k6로 측정했습니다."
       />
 
       {/* 테스트 환경 */}
@@ -682,6 +644,53 @@ const K6Section: React.FC = () => {
             <p className="mt-2 text-xs text-zinc-500">{c.sub}</p>
           </div>
         ))}
+      </div>
+
+      {/* 판정 결과 */}
+      <div className={`${cardClass} !p-0 overflow-hidden mb-6`}>
+        <div className="px-6 sm:px-8 pt-6 sm:pt-8 pb-5 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h3 className="text-xl font-bold text-white">시나리오별 판정</h3>
+            <p className="mt-1 text-sm text-zinc-500">정확도 · 실패율 · 응답 시간(p95, p99) 기준</p>
+          </div>
+          <span className="rounded-full px-3 py-1 text-xs font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-300">
+            보안 판정 {stats.securityPassCount} / {LOAD_SCENARIOS.length} 통과
+          </span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[720px] text-sm">
+            <thead>
+              <tr className="border-y border-white/5 bg-black/30 text-left text-xs uppercase tracking-wider text-zinc-500">
+                <th className="px-6 py-3 font-semibold">시나리오</th>
+                <th className="px-4 py-3 font-semibold">측정 시각</th>
+                <th className="px-4 py-3 font-semibold text-right">정확도</th>
+                <th className="px-4 py-3 font-semibold text-right">실패</th>
+                <th className="px-4 py-3 font-semibold text-right">p95</th>
+                <th className="px-4 py-3 font-semibold text-right">p99</th>
+                <th className="px-6 py-3 font-semibold text-right">판정</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {LOAD_SCENARIOS.map((s) => (
+                <tr key={s.mode} className="transition hover:bg-white/[0.02]">
+                  <td className="px-6 py-3">
+                    <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold tracking-wider border ${MODE_STYLES[s.mode].badge}`}>
+                      {MODE_STYLES[s.mode].label}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 font-mono text-zinc-400">{s.measuredAt}</td>
+                  <td className="px-4 py-3 text-right font-mono text-zinc-100">{fmtPct(s.accuracy, 1)}</td>
+                  <td className="px-4 py-3 text-right font-mono text-zinc-100">{fmtPct(s.failRate, 1)}</td>
+                  <td className="px-4 py-3 text-right font-mono text-zinc-100">{fmtDur(s.p95Ms)}</td>
+                  <td className="px-4 py-3 text-right font-mono text-zinc-100">{fmtDur(s.p99Ms)}</td>
+                  <td className="px-6 py-3 text-right">
+                    <VerdictBadge s={s} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* 차트 */}
@@ -711,62 +720,13 @@ const K6Section: React.FC = () => {
       </div>
 
       {/* 시나리오별 상세 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 gap-6 mb-6">
         {LOAD_SCENARIOS.map((s) => (
           <ScenarioCard key={s.mode} s={s} />
         ))}
       </div>
 
-      {/* 이전 측정 대비 */}
-      <div className={`${cardClass} !p-0 overflow-hidden mb-6`}>
-        <div className="px-6 sm:px-8 pt-6 sm:pt-8 pb-5">
-          <h3 className="text-xl font-bold text-white">이전 측정 대비</h3>
-          <p className="mt-1 text-sm text-zinc-500">
-            지난 측정 (로컬 · 마스킹 적용 전) → 이번 측정 (로컬 · 마스킹 적용 + 최신 버전)
-          </p>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] text-sm">
-            <thead>
-              <tr className="border-y border-white/5 bg-black/30 text-left text-xs uppercase tracking-wider text-zinc-500">
-                <th className="px-6 py-3 font-semibold">시나리오</th>
-                <th className="px-4 py-3 font-semibold">지표</th>
-                <th className="px-4 py-3 font-semibold text-right">지난</th>
-                <th className="px-4 py-3 font-semibold text-right">이번</th>
-                <th className="px-4 py-3 font-semibold text-right">변화</th>
-                <th className="px-6 py-3 font-semibold text-right">판정</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {COMPARE_ROWS.map((r, i) => {
-                const firstOfGroup = i === 0 || COMPARE_ROWS[i - 1].scenario !== r.scenario;
-                return (
-                  <tr key={`${r.scenario}-${r.metric}`} className="transition hover:bg-white/[0.02]">
-                    <td className="px-6 py-3 font-semibold text-zinc-200">
-                      {firstOfGroup ? r.scenario : ''}
-                    </td>
-                    <td className="px-4 py-3 text-zinc-400">{r.metric}</td>
-                    <td className="px-4 py-3 text-right font-mono text-zinc-500">
-                      {fmtCompareValue(r.prev, r.unit)}
-                    </td>
-                    <td className="px-4 py-3 text-right font-mono font-bold text-zinc-100">
-                      {fmtCompareValue(r.curr, r.unit)}
-                    </td>
-                    <td className="px-4 py-3 text-right font-mono text-zinc-400">{fmtChange(r)}</td>
-                    <td className="px-6 py-3 text-right">
-                      <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold border ${VERDICT_STYLES[r.verdict]}`}>
-                        {r.note}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* 분석 요약 + 참고 */}
+      {/* 분석 요약 + 최적화 계획 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className={cardClass}>
           <h3 className="text-xl font-bold text-white">분석 요약</h3>
@@ -781,11 +741,11 @@ const K6Section: React.FC = () => {
         </div>
 
         <div className={cardClass}>
-          <h3 className="text-xl font-bold text-white">참고 · 개선 과제</h3>
+          <h3 className="text-xl font-bold text-white">성능 최적화 계획</h3>
           <ul className="mt-6 space-y-4">
             {notes.map((t) => (
               <li key={t} className="flex gap-3 text-sm leading-relaxed text-zinc-300">
-                <ExclamationTriangleIcon className="w-5 h-5 shrink-0 text-amber-400" />
+                <ClockIcon className="w-5 h-5 shrink-0 text-blue-400" />
                 {t}
               </li>
             ))}

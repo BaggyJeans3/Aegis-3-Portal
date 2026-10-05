@@ -42,6 +42,7 @@ const CustomerDashboardPage: React.FC = () => {
   // 로그 영역의 스크롤 컨테이너 ref. 이걸로 내부 scrollTop 만 조작해서
   // 페이지 전체 스크롤을 트리거하지 않음.
   const logContainerRef = useRef<HTMLDivElement>(null);
+  const autoScrollRef = useRef<boolean>(true); // 자동 스크롤 여부 추적
 
   // 0. 권한 체크 (로그인 안 했으면 로그인 페이지로)
   useEffect(() => {
@@ -99,16 +100,26 @@ const CustomerDashboardPage: React.FC = () => {
     };
   }, [selectedTenant]);
 
-  // 새 로그가 오면 로그 컨테이너 내부에서만 맨 아래로 스크롤.
-  // scrollIntoView 는 페이지 전체 스크롤까지 트리거하므로 사용하지 않음.
-  // 사용자가 위로 스크롤해서 옛날 로그 읽는 중이면 자동 스크롤 중단.
+  // 스크롤 이벤트 핸들러: 사용자가 스크롤을 움직일 때마다 위치 확인
+  const handleScroll = () => {
+    const container = logContainerRef.current;
+    if (!container) return;
+    
+    // 현재 스크롤이 맨 밑(오차 50px 이내)인지 확인
+    const isNearBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight < 50;
+    
+    // 맨 밑이면 자동 스크롤 활성화, 아니면 비활성화
+    autoScrollRef.current = isNearBottom;
+  };
+
+  // 새 로그가 오거나 초기 로드될 때 자동 스크롤 적용
   useEffect(() => {
     const container = logContainerRef.current;
     if (!container) return;
-    const isNearBottom =
-      container.scrollHeight - container.scrollTop - container.clientHeight <
-      50;
-    if (isNearBottom) {
+    
+    // 자동 스크롤이 활성화되어 있을 때만 맨 밑으로 이동
+    if (autoScrollRef.current) {
       container.scrollTop = container.scrollHeight;
     }
   }, [logs]);
@@ -270,6 +281,7 @@ const CustomerDashboardPage: React.FC = () => {
             ref 를 통해 useEffect 에서 scrollTop 만 조작. */}
         <div
           ref={logContainerRef}
+          onScroll={handleScroll}
           className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-8 font-mono text-sm custom-scrollbar relative z-10"
         >
           <div className="max-w-[1200px] mx-auto w-full">
