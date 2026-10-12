@@ -1,76 +1,149 @@
 import React from 'react';
 
+const DEFENSE_STEPS = [
+  {
+    step: '01',
+    title: '비정상 API 접근 유도',
+    description: '정상 사용자에게 노출되지 않는 가짜 API 경로를 구성해 공격 시도를 유도하고 접근 기록을 수집합니다.',
+    badgeStyle: 'bg-blue-500/15 border-blue-500/30 text-blue-400',
+  },
+  {
+    step: '02',
+    title: '요청 위험도 분석',
+    description: 'WAF 탐지 결과와 요청 패턴을 분석하고 위험 점수를 산출해 공격 가능성을 판단합니다.',
+    badgeStyle: 'bg-indigo-500/15 border-indigo-500/30 text-indigo-400',
+  },
+  {
+    step: '03',
+    title: '위험 요청 선별 차단',
+    description: '검증된 보안 규칙을 적용해 악성 요청을 차단하고 정상 요청은 보호된 서비스로 전달합니다.',
+    badgeStyle: 'bg-purple-500/15 border-purple-500/30 text-purple-400',
+  },
+  {
+    step: '04',
+    title: 'API 호출 로그 파악',
+    description: '고객사는 전용 대시보드 페이지에서 실시간 API 호출 로그와 차단·유도 현황을 한눈에 파악할 수 있습니다.',
+    badgeStyle: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400',
+  },
+];
+
 const MainPage: React.FC = () => {
   return (
     <div className="w-full min-h-screen bg-[#0b0c10] px-6 sm:px-12 lg:px-24 pt-20 pb-16">
-      <div className="max-w-[1200px] mx-auto space-y-24">
+      <div className="max-w-[1240px] mx-auto space-y-24">
         {/* Hero Section */}
         <section className="relative w-full">
-          {/* Subtle right glow (matching image) */}
-          <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[30rem] h-[30rem] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none"></div>
+          {/* Subtle background glow */}
+          <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[32rem] h-[32rem] bg-indigo-500/10 rounded-full blur-[130px] pointer-events-none"></div>
 
-          <div className="relative z-10 flex flex-col items-start gap-8">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2.5 rounded-full border border-blue-500/30 bg-[#1e293b]/30 px-5 py-2 backdrop-blur-sm">
-              <span className="h-2 w-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]"></span>
-              <span className="text-[15px] font-bold tracking-wide text-blue-400">
-                중부대학교 정보보호학 졸업작품 프로젝트
-              </span>
-            </div>
-
-            {/* Heading */}
-            <h1 className="flex flex-col gap-1 tracking-tight font-black">
-              <span className="text-[4rem] sm:text-[5rem] lg:text-[6.5rem] leading-[1.1] text-slate-100 drop-shadow-sm">
-                Aegis-3를
-              </span>
-              <span className="text-[4rem] sm:text-[5rem] lg:text-[6.5rem] leading-[1.1] text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">
-                소개합니다
-              </span>
-            </h1>
-
-            {/* Features List */}
-            <div className="mt-6 flex flex-col gap-7">
-              <div className="flex items-center gap-5">
-                <div className="flex items-center justify-center">
-                  <svg
-                    className="w-8 h-8 text-blue-500"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"
-                    />
-                  </svg>
-                </div>
-                <p className="text-xl sm:text-2xl text-slate-300 font-medium tracking-tight">
-                  개발 단계(Shift-Left)에서 자동생성되는 SHADOW API로 단순
-                  스캐닝 차단
-                </p>
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-10 xl:gap-14 items-center">
+            {/* Left Column: Heading & Features */}
+            <div className="lg:col-span-7 flex flex-col items-start gap-8">
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2.5 rounded-full border border-blue-500/30 bg-[#1e293b]/30 px-5 py-2 backdrop-blur-sm">
+                <span className="h-2 w-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]"></span>
+                <span className="text-[15px] font-bold tracking-wide text-blue-400">
+                  중부대학교 정보보호학 졸업작품 프로젝트
+                </span>
               </div>
 
-              <div className="flex items-center gap-5">
-                <div className="flex items-center justify-center">
-                  <svg
-                    className="w-8 h-8 text-purple-500"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M13 10V3L4 14h7v7l9-11h-7z"
-                    />
-                  </svg>
+              {/* Heading */}
+              <h1 className="flex flex-col gap-1 tracking-tight font-black">
+                <span className="text-[3.8rem] sm:text-[4.8rem] lg:text-[5.2rem] xl:text-[5.8rem] leading-[1.1] text-slate-100 drop-shadow-sm">
+                  Aegis-3를
+                </span>
+                <span className="text-[3.8rem] sm:text-[4.8rem] lg:text-[5.2rem] xl:text-[5.8rem] leading-[1.1] text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">
+                  소개합니다
+                </span>
+              </h1>
+
+              {/* Features List */}
+              <div className="mt-2 flex flex-col gap-7">
+                <div className="flex items-center gap-5">
+                  <div className="flex items-center justify-center shrink-0">
+                    <svg
+                      className="w-8 h-8 text-blue-500"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"
+                      />
+                    </svg>
+                  </div>
+                  <p className="text-xl sm:text-2xl text-slate-300 font-medium tracking-tight break-keep-all">
+                    API 명세서 등록 시 생성되는 기만용 API(Shadow API)로
+                    <br />
+                    자동화 스캐닝을 조기 탐지·유인
+                  </p>
                 </div>
-                <p className="text-xl sm:text-2xl text-slate-300 font-medium tracking-tight">
-                  내부로 침투한 정교한 위협은 LLM기반 SOAR가 분석 및 대응
-                </p>
+
+                <div className="flex items-center gap-5">
+                  <div className="flex items-center justify-center shrink-0">
+                    <svg
+                      className="w-8 h-8 text-purple-500"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M13 10V3L4 14h7v7l9-11h-7z"
+                      />
+                    </svg>
+                  </div>
+                  <p className="text-xl sm:text-2xl text-slate-300 font-medium tracking-tight break-keep-all">
+                    내부로 침투한 정교한 위협은 LLM기반 SOAR가 분석 및 대응
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: 4-Step Defense Flow (Red Box Area) */}
+            <div className="lg:col-span-5 w-full">
+              <div className="relative rounded-[2rem] border border-white/10 bg-[#12131a]/90 p-6 sm:p-7 backdrop-blur-xl shadow-2xl overflow-hidden">
+                {/* Subtle gradient highlights */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl pointer-events-none"></div>
+                <div className="absolute bottom-0 left-0 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+                <div className="relative z-10 flex flex-col gap-4 sm:gap-5">
+                  {DEFENSE_STEPS.map((item, index) => (
+                    <div key={item.step} className="relative flex items-start gap-4">
+                      {/* Connecting vertical line */}
+                      {index < DEFENSE_STEPS.length - 1 && (
+                        <div className="absolute left-[17px] top-10 bottom-[-18px] sm:bottom-[-20px] w-[2px] bg-gradient-to-b from-white/20 to-white/5" />
+                      )}
+
+                      {/* Step Number Badge */}
+                      <div
+                        className={`shrink-0 w-9 h-9 rounded-xl border flex items-center justify-center font-mono font-bold text-xs tracking-wider shadow-sm ${item.badgeStyle}`}
+                      >
+                        {item.step}
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] font-mono tracking-wider uppercase text-slate-400">
+                            STEP {item.step}
+                          </span>
+                        </div>
+                        <h3 className="text-base sm:text-[17px] font-bold text-white tracking-tight mt-0.5">
+                          {item.title}
+                        </h3>
+                        <p className="text-sm text-slate-400 mt-1 leading-relaxed">
+                          {item.description}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
